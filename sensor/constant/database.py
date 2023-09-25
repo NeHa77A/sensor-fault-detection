@@ -1,1 +1,2 @@
-DATABASE_NAME = "sensor"
+DATABASE_NAME = "NehaDB"
+COLLECTION_NAME = "sensor"

@@ -2,4 +2,5 @@ numpy
 dill
 pymongo[srv]==4.2.0
 certifi
+from_root
 -e .
