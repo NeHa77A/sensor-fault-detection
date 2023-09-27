@@ -5,4 +5,5 @@ certifi
 from_root
 scikit-learn
 PyYAML
+scipy
 -e .
