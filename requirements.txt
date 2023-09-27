@@ -6,4 +6,6 @@ from_root
 scikit-learn
 PyYAML
 scipy
+imblearn
+dill
 -e .
