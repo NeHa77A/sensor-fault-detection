@@ -21,7 +21,7 @@ class DataValidation:
 # Number of columns
     def validate_number_of_columns(self, dataframe:pd.DataFrame)->bool:
         try:
-            Number_of_columns=self._schema_config["columns"]
+            Number_of_columns=len(self._schema_config["columns"])
             if len(dataframe.columns)== Number_of_columns:
                 return True
             return False
@@ -120,8 +120,8 @@ class DataValidation:
                 validation_status=status,
                 valid_train_file_path=self.data_ingestion_artifact.trained_file_path,
                 valid_test_file_path= self.data_ingestion_artifact.test_file_path,
-                invalid_train_file_path=self.data_validation_config.invalid_train_file_path,
-                invalid_test_file_path= self.data_validation_config.invalid_test_file_path,
+                invalid_train_file_path=None,
+                invalid_test_file_path= None,
                 drift_report_file_path= self.data_validation_config.drift_report_file_path
             )
 
