@@ -36,14 +36,68 @@ class DataTransformation:
             simple_imputer = SimpleImputer(strategy="constant", fill_value=0)
 
             preprocessor =Pipeline(
-                steps=[("Imputer",simple_imputer),
-                ("RobustScaler",robust_scaler)]
+                steps=[("Imputer",simple_imputer), # repalce missing value with zero
+                ("RobustScaler",robust_scaler)]    # handle outliers
             )
+            return preprocessor
         except Exception as e:
             raise SensorException(e,sys)
         
     def initiate_data_transformation(self)->DataTransformationArtifact:
         try:
-            pass
+            train_df = DataTransformation.read_data(
+                self.data_validation_artifact.valid_train_file_path
+            )
+            test_df=DataTransformation.read_data(
+                self.data_validation_artifact.valid_test_file_path
+            )
+            preprocessor = self.get_data_transformer_object()
+
+            # tarining data frame
+            input_feature_train_df = train_df.drop(columns=[TARGET_COLUMN], axis=1)
+            target_feature_train_df = train_df[TARGET_COLUMN]
+            target_feature_train_df = target_feature_train_df.replace(
+                TragetValueMapping().to_dict()
+            )
+            # testing data frame
+            input_feature_test_df = test_df.drop(columns=[TARGET_COLUMN], axis=1)
+            target_feature_test_df = test_df[TARGET_COLUMN]
+            target_feature_test_df = target_feature_test_df.replace(
+                TragetValueMapping().to_dict()
+            )
+
+            # transform it
+            preprocessor_objrct=preprocessor.fit(input_feature_train_df)
+            transfomed_input_train_feature = preprocessor_objrct.transform(input_feature_train_df)
+            transfomed_input_test_feature = preprocessor_objrct.transform(input_feature_test_df)
+
+            smt = SMOTETomek(sampling_strategy="minority")
+            input_feature_train_final , target_feature_train_final = smt.fit_resample(
+                transfomed_input_train_feature, target_feature_train_df
+            )
+            input_feature_test_final , target_feature_test_final = smt.fit_resample(
+                transfomed_input_test_feature, target_feature_test_df
+            )
+
+            # concatinate train target and input
+            train_arr =np.c_[input_feature_train_final,np.array(target_feature_train_final)]
+            test_arr =np.c_[input_feature_test_final,np.array(target_feature_test_final)]
+
+            # save npy data
+            save_numpy_array_data(self.data_transformation_config.transformed_train_file_path,array=train_arr)
+            save_numpy_array_data(self.data_transformation_config.transformed_test_file_path,array=test_arr)
+
+            save_object(self.data_transformation_config.transformed_object_file_path,preprocessor)
+            # preparing artifacts
+            data_transformation_artifact= DataTransformationArtifact(
+                transformed_object_file_path = self.data_transformation_config.transformed_object_file_path,
+                transformed_train_file_path = self.data_transformation_config.transformed_train_file_path,
+                transformed_test_file_path = self.data_transformation_config.transformed_test_file_path
+            )
+
+            logging.info(f"data Transformation artifact: {data_transformation_artifact}")
+            return data_transformation_artifact
+
+
         except Exception as e:
             raise SensorException(e,sys)
