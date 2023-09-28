@@ -8,4 +8,5 @@ PyYAML
 scipy
 imblearn
 dill
+xgboost
 -e .
