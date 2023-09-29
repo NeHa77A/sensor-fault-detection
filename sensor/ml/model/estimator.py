@@ -53,7 +53,7 @@ class ModelResolver:
             if len(timestamps)==0:
                 return False
             
-            latest_model_path=self.get_best_model()
+            latest_model_path=self.get_best_model_path()
             if not os.path.exists(latest_model_path):
                 return False
             

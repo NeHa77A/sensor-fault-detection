@@ -5,10 +5,11 @@ from sensor.entity.config_entity import ModelEvaluationConfig
 import os, sys
 from sensor.ml.metric.classification_metric import get_classification_score
 from sensor.ml.model.estimator import SensorModel
-from sensor.utils.main_utils import save_object,load_object
+from sensor.utils.main_utils import save_object,load_object,write_yaml_file
 from sensor.ml.model.estimator import ModelResolver
 from sensor.constant.training_pipeline import TARGET_COLUMN
 import pandas as pd
+from sensor.ml.model.estimator import TragetValueMapping
 
 class ModelEvaluation:
     def __init__(self,model_evaluation_config:ModelEvaluationConfig,
@@ -31,6 +32,9 @@ class ModelEvaluation:
             test_df = pd.read_csv(valid_test_file)
             # Merge
             df =pd.concat([train_df,test_df])
+            y_true = df[TARGET_COLUMN]
+            y_true.replace(TragetValueMapping().to_dict(),inplace=True)
+            df.drop(TARGET_COLUMN, axis=1,inplace=True)
 
             train_model_file_path = self.model_trainer_artifact.trained_model_file_path
             model_resolver=ModelResolver()
@@ -52,18 +56,32 @@ class ModelEvaluation:
             latest_model =load_object(file_path=latest_model_path)
             train_model = load_object(file_path=train_model_file_path)
 
-            y_true = df[TARGET_COLUMN]
+            
             y_train_pred= train_model.predict(df)
             y_latest_pred =latest_model.predict(df)
 
             trained_metric =get_classification_score(y_true,y_train_pred)
             latest_metric =get_classification_score(y_true,y_latest_pred)
 
-            improved_accuracy=trained_metric - latest_metric
+            improved_accuracy=trained_metric.f1_score - latest_metric.f1_score
             if self.model_evaluation_config.change_threshold <improved_accuracy:
                 is_model_accepted =True
             else:
                 is_model_accepted = False
+
+            model_evaluation_artifact=ModelEvaluationArtifact(
+                    is_model_accepted=is_model_accepted,
+                    improved_accuracy=improved_accuracy,
+                    best_model_path=latest_model_path,
+                    trained_model_path=train_model_file_path,
+                    train_model_metric_artifact=trained_metric,
+                    best_model_metric_artifact=latest_metric
+                )
+            model_evaluation_report=model_evaluation_artifact.__dict__
+            #save report
+            write_yaml_file(self.model_evaluation_config.report_file_path, model_evaluation_report)
+            logging.info(f"Model Evaluation artifact: {model_evaluation_artifact}")
+            return model_evaluation_artifact
 
 
 

@@ -9,4 +9,6 @@ scipy
 imblearn
 dill
 xgboost
+uvicorn
+fastapi
 -e .
