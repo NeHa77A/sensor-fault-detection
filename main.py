@@ -5,7 +5,7 @@ from sensor.logger import logging
 from sensor.entity.config_entity import TrainingPipelineConfig,DataIngestionConfig
 from sensor.pipeline.training_pipeline import TrainPipeline
 from fastapi import FastAPI
-from sensor.constant.application import APP_HOST, APP_POST
+from sensor.constant.application import APP_HOST, APP_PORT
 from starlette.responses import RedirectResponse
 from uvicorn import run as app_run
 from fastapi.responses import Response
@@ -86,5 +86,5 @@ def main():
         print(e)
         logging.exception(e)
 if __name__=='__main__':
-    app_run(app, host=APP_HOST, port=APP_POST)
+    app_run(app, host=APP_HOST, port=APP_PORT)
     #main()
